@@ -44,7 +44,7 @@ fn solve_second_task<B: BufRead>(reader: B) -> usize {
                     for word in [
                         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
                     ] {
-                        if let Some(0) = partial_line.find(word) {
+                        if partial_line.starts_with(word) {
                             match word {
                                 "one" => result.push('1'),
                                 "two" => result.push('2'),
