@@ -10,21 +10,62 @@ enum Task {
     Second,
 }
 
+/// Function to calculate the calibration value.
+fn calculate_calibration_value(line: String) -> usize {
+    if let Some(first_number) = line.chars().next() {
+        let last_number = line.chars().last().unwrap();
+        format!("{}{}", first_number, last_number)
+            .parse::<usize>()
+            .unwrap()
+    } else {
+        0
+    }
+}
+
+/// Function needed by the second task to parse written numbers to numbers (eight -> 8).
+fn words_to_numbers(line: String) -> String {
+    let mut result = String::from("");
+    let mut index = 0;
+    while index < line.len() {
+        let partial_line = &line[index..];
+        let first_character = partial_line.chars().next().unwrap();
+        if first_character.is_digit(10) == true {
+            result.push(first_character);
+        } else {
+            for word in [
+                "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+            ] {
+                if partial_line.starts_with(word) {
+                    match word {
+                        "one" => result.push('1'),
+                        "two" => result.push('2'),
+                        "three" => result.push('3'),
+                        "four" => result.push('4'),
+                        "five" => result.push('5'),
+                        "six" => result.push('6'),
+                        "seven" => result.push('7'),
+                        "eight" => result.push('8'),
+                        "nine" => result.push('9'),
+                        _ => unreachable!(),
+                    };
+                    // Move not directly after the word but also watch the last letter
+                    // to recognize cases like eightwo (82 instead of 8wo).
+                    index = index + word.len() - 2;
+                    break;
+                }
+            }
+        }
+        index = index + 1;
+    }
+    result
+}
+
 fn solve_first_task<B: BufRead>(reader: B) -> usize {
     reader
         .lines()
         .map(Result::unwrap)
         .map(|line| line.chars().filter(|c| c.is_digit(10)).collect())
-        .map(|line: String| {
-            if let Some(first_number) = line.chars().next() {
-                let last_number = line.chars().last().unwrap();
-                format!("{}{}", first_number, last_number)
-                    .parse::<usize>()
-                    .unwrap()
-            } else {
-                0
-            }
-        })
+        .map(calculate_calibration_value)
         .sum()
 }
 
@@ -32,50 +73,8 @@ fn solve_second_task<B: BufRead>(reader: B) -> usize {
     reader
         .lines()
         .map(Result::unwrap)
-        .map(|line| {
-            let mut result = String::from("");
-            let mut index = 0;
-            while index < line.len() {
-                let partial_line = &line[index..];
-                let first_character = partial_line.chars().next().unwrap();
-                if first_character.is_digit(10) == true {
-                    result.push(first_character);
-                } else {
-                    for word in [
-                        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-                    ] {
-                        if partial_line.starts_with(word) {
-                            match word {
-                                "one" => result.push('1'),
-                                "two" => result.push('2'),
-                                "three" => result.push('3'),
-                                "four" => result.push('4'),
-                                "five" => result.push('5'),
-                                "six" => result.push('6'),
-                                "seven" => result.push('7'),
-                                "eight" => result.push('8'),
-                                "nine" => result.push('9'),
-                                _ => unreachable!(),
-                            };
-                            index = index + word.len() - 2;
-                            break;
-                        }
-                    }
-                }
-                index = index + 1;
-            }
-            result
-        })
-        .map(|line| {
-            if let Some(first_number) = line.chars().next() {
-                let last_number = line.chars().last().unwrap();
-                format!("{}{}", first_number, last_number)
-                    .parse::<usize>()
-                    .unwrap()
-            } else {
-                0
-            }
-        })
+        .map(|line| words_to_numbers(line))
+        .map(calculate_calibration_value)
         .sum()
 }
 
