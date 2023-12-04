@@ -14,3 +14,8 @@ cargo new --bin "$project_name"
 # Replace the new main.rs file with the template file.
 rm $project_name/src/main.rs
 cp template/src/main.rs $project_name/src/main.rs
+
+# Create the template for the input.
+cd $project_name
+touch input
+touch input.test
