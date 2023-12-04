@@ -11,10 +11,10 @@ enum Task {
     Second,
 }
 
-fn extract_numbers(line: String) -> (Vec<usize>, Vec<usize>) {
+fn extract_numbers(line: String) -> (HashSet<usize>, HashSet<usize>) {
     let numbers = line.split(':').nth(1).unwrap();
     let mut number_parts = numbers.trim().split('|');
-    let winning_numbers: Vec<usize> = number_parts
+    let winning_numbers: HashSet<_> = number_parts
         .next()
         .unwrap()
         .trim()
@@ -22,7 +22,7 @@ fn extract_numbers(line: String) -> (Vec<usize>, Vec<usize>) {
         .into_iter()
         .map(|value| value.parse::<usize>().unwrap())
         .collect();
-    let drawn_numbers: Vec<usize> = number_parts
+    let drawn_numbers: HashSet<_> = number_parts
         .next()
         .unwrap()
         .trim()
@@ -34,9 +34,7 @@ fn extract_numbers(line: String) -> (Vec<usize>, Vec<usize>) {
 }
 
 fn get_number_of_wins(line: String) -> usize {
-    let (winning_numbers, drawn_numbers) = extract_numbers(line);
-    let winning_hashset: HashSet<_> = winning_numbers.iter().collect();
-    let drawn_hashset: HashSet<_> = drawn_numbers.iter().collect();
+    let (winning_hashset, drawn_hashset) = extract_numbers(line);
     let common_numbers: HashSet<_> = winning_hashset.intersection(&drawn_hashset).collect();
     common_numbers.len()
 }
