@@ -53,14 +53,15 @@ fn parse_input_task2<B: BufRead>(reader: B) -> (usize, usize) {
 }
 
 fn get_number_of_winning_cases(time: usize, distance: usize) -> usize {
-    let sqrt_term = f64::powi(time as f64 * 0.5, 2) - distance as f64;
-    if sqrt_term < 0.0 {
+    let first_term = time as f64 * 0.5;
+    let sqrt_term = f64::sqrt(f64::powi(first_term, 2) - distance as f64);
+    if sqrt_term.is_nan() {
         // There is no root.
+        // This is not necessary for our case but what so ever.
         return 0;
     }
-    // Find the first root and the second root.
-    let mut x1 = time as f64 * 0.5 - f64::sqrt(sqrt_term);
-    let mut x2 = time as f64 * 0.5 + f64::sqrt(sqrt_term);
+    let mut x1 = first_term - sqrt_term;
+    let mut x2 = first_term + sqrt_term;
     // Check if the value is equal to the integer part. If so add / subtract one.
     if x1.trunc() == x1 {
         x1 += 1.0;
