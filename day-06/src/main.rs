@@ -10,48 +10,6 @@ enum Task {
     Second,
 }
 
-fn parse_input_task1<B: BufRead>(reader: B) -> (Vec<usize>, Vec<usize>) {
-    let lines: Vec<String> = reader.lines().map(Result::unwrap).collect();
-    let times = lines[0]
-        .split(':')
-        .nth(1)
-        .unwrap()
-        .split_whitespace()
-        .map(|s| s.trim().parse::<usize>().unwrap())
-        .collect();
-    let distances = lines[1]
-        .split(':')
-        .nth(1)
-        .unwrap()
-        .split_whitespace()
-        .map(|s| s.trim().parse::<usize>().unwrap())
-        .collect();
-    (times, distances)
-}
-
-fn parse_input_task2<B: BufRead>(reader: B) -> (usize, usize) {
-    let lines: Vec<String> = reader.lines().map(Result::unwrap).collect();
-    let time: String = lines[0]
-        .split(':')
-        .nth(1)
-        .unwrap()
-        .chars()
-        .filter(|&c| !c.is_whitespace())
-        .collect();
-    let distance: String = lines[1]
-        .split(':')
-        .nth(1)
-        .unwrap()
-        .chars()
-        .filter(|&c| !c.is_whitespace())
-        .collect();
-
-    (
-        time.parse::<usize>().unwrap(),
-        distance.parse::<usize>().unwrap(),
-    )
-}
-
 fn get_number_of_winning_cases(time: usize, distance: usize) -> usize {
     let first_term = time as f64 * 0.5;
     let sqrt_term = f64::sqrt(f64::powi(first_term, 2) - distance as f64);
@@ -70,17 +28,34 @@ fn get_number_of_winning_cases(time: usize, distance: usize) -> usize {
         x2 -= 1.0;
     }
     // Only keep the integer parts by ceiling / flooring.
-    let x1 = x1.ceil() as usize;
-    let x2 = x2.floor() as usize;
-    x2 - x1 + 1
+    x2.floor() as usize - x1.ceil() as usize + 1
 }
 
 fn solve_first_task<B: BufRead>(reader: B) -> usize {
-    let (times, distances) = parse_input_task1(reader);
+    let mut lines = reader.lines();
+    let times = lines
+        .next()
+        .ok_or_else(|| "Cannot find first line (times).")
+        .unwrap()
+        .unwrap();
+    let distances = lines
+        .next()
+        .ok_or_else(|| "Cannot find second line (distances).")
+        .unwrap()
+        .unwrap();
+    let times = times
+        .split_ascii_whitespace()
+        .skip(1)
+        .map(str::parse::<usize>)
+        .map(Result::unwrap);
+    let distances = distances
+        .split_ascii_whitespace()
+        .skip(1)
+        .map(str::parse::<usize>)
+        .map(Result::unwrap);
     times
-        .iter()
-        .zip(distances.iter())
-        .map(|(time, distance)| get_number_of_winning_cases(*time, *distance))
+        .zip(distances)
+        .map(|(time, distance)| get_number_of_winning_cases(time, distance))
         .fold(1, |mut product, value| {
             product *= value;
             product
@@ -88,7 +63,29 @@ fn solve_first_task<B: BufRead>(reader: B) -> usize {
 }
 
 fn solve_second_task<B: BufRead>(reader: B) -> usize {
-    let (time, distance) = parse_input_task2(reader);
+    let mut lines = reader.lines();
+    let times = lines
+        .next()
+        .ok_or_else(|| "Cannot find first line (times).")
+        .unwrap()
+        .unwrap();
+    let distances = lines
+        .next()
+        .ok_or_else(|| "Cannot find second line (distances).")
+        .unwrap()
+        .unwrap();
+    let time = times
+        .bytes()
+        .filter(|byte| byte.is_ascii_digit())
+        .fold(0_usize, |number, digit| {
+            number * 10 + (digit - b'0') as usize
+        });
+    let distance = distances
+        .bytes()
+        .filter(|byte| byte.is_ascii_digit())
+        .fold(0_usize, |number, digit| {
+            number * 10 + (digit - b'0') as usize
+        });
     get_number_of_winning_cases(time, distance)
 }
 
