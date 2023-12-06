@@ -335,7 +335,6 @@ mod tests {
                 },
             ],
         };
-        let min_location = almanac.get_min_location();
-        assert_eq!(min_location, 10);
+        assert_eq!(almanac.get_min_location(), 10);
     }
 }
