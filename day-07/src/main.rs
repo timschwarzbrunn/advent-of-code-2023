@@ -11,6 +11,7 @@ enum Task {
     Second,
 }
 
+// Types of hands possible. They need to be ordered from lowest value to highest.
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum HandType {
     HighCard,
@@ -31,6 +32,9 @@ struct Hand {
     task: Task,
 }
 
+// A function used instead of sorting the whole array. We only need the two highest
+// numbers to determine which type of hand we have, so we do not need to sort the
+// whole array.
 fn find_two_largest_numbers(values: &[usize]) -> (usize, usize) {
     let mut first: usize = 0;
     let mut second: usize = 0;
@@ -48,6 +52,7 @@ fn find_two_largest_numbers(values: &[usize]) -> (usize, usize) {
 impl Hand {
     fn char_to_card_index(c: u8, task: Task) -> usize {
         // A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2
+        // In task 1, 2 is the lowest, in task 2, Joker is the lowest.
         if c.is_ascii_digit() {
             match task {
                 Task::First => (c - b'2') as usize,
@@ -74,10 +79,12 @@ impl Hand {
     fn determine_hand_type(cards: &[usize; 13], task: Task) -> HandType {
         let (first_largest, second_largest) = match task {
             Task::First => find_two_largest_numbers(cards),
+            // Do not include the joker within the second task.
             Task::Second => find_two_largest_numbers(&cards[1..]),
         };
         match match task {
             Task::First => (first_largest, second_largest),
+            // In the second task, simply add all jokers to the card with the heighest occurence.
             Task::Second => (first_largest + cards[0], second_largest),
         } {
             (5, 0) => HandType::FiveOfAKind,
@@ -113,6 +120,7 @@ impl Hand {
 impl PartialOrd for Hand {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self.hand_type == other.hand_type {
+            // The hand types are equal so we will look at the hand.
             for (c1, c2) in self.hand.bytes().zip(other.hand.bytes()) {
                 if c1 == c2 {
                     continue;
@@ -122,6 +130,7 @@ impl PartialOrd for Hand {
             }
             None
         } else {
+            // The hand types can be simply compared.
             self.hand_type.partial_cmp(&other.hand_type)
         }
     }
