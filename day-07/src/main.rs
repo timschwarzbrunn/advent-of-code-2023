@@ -52,12 +52,14 @@ fn find_two_largest_numbers(values: &[usize]) -> (usize, usize) {
 impl Hand {
     fn char_to_card_index(c: u8, task: Task) -> usize {
         // A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2
-        // In task 1, 2 is the lowest, in task 2, Joker is the lowest.
+        // In task 1, 2 is the lowest, in task 2, joker is the lowest.
         if c.is_ascii_digit() {
-            match task {
-                Task::First => (c - b'2') as usize,
-                Task::Second => (c - b'1') as usize,
-            }
+            (c - b'2') as usize
+                + match task {
+                    Task::First => 0,
+                    // Reserve index 0 for the joker.
+                    Task::Second => 1,
+                }
         } else {
             match c {
                 b'T' => match task {
@@ -82,11 +84,14 @@ impl Hand {
             // Do not include the joker within the second task.
             Task::Second => find_two_largest_numbers(&cards[1..]),
         };
-        match match task {
-            Task::First => (first_largest, second_largest),
-            // In the second task, simply add all jokers to the card with the heighest occurence.
-            Task::Second => (first_largest + cards[0], second_largest),
-        } {
+        match (
+            first_largest
+                + match task {
+                    Task::First => 0,
+                    Task::Second => cards[0],
+                },
+            second_largest,
+        ) {
             (5, 0) => HandType::FiveOfAKind,
             (4, 1) => HandType::FourOfAKind,
             (3, 2) => HandType::FullHouse,
