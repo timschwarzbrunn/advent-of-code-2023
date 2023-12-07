@@ -31,6 +31,20 @@ struct Hand {
     task: Task,
 }
 
+fn find_two_largest_numbers(values: &[usize]) -> (usize, usize) {
+    let mut first: usize = 0;
+    let mut second: usize = 0;
+    for value in values {
+        if *value > first {
+            second = first;
+            first = *value;
+        } else if *value > second {
+            second = *value;
+        }
+    }
+    (first, second)
+}
+
 impl Hand {
     fn char_to_card_index(c: u8, task: Task) -> usize {
         // A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2
@@ -58,17 +72,14 @@ impl Hand {
     }
 
     fn determine_hand_type(cards: &[usize; 13], task: Task) -> HandType {
-        // Determine the hand type (depending on the task).
-        let mut cards_ordered = cards.clone();
-        match task {
-            Task::First => {
-                cards_ordered.sort();
-            }
-            Task::Second => {
-                cards_ordered[1..].sort();
-            }
-        }
-        match (cards_ordered[12] + cards_ordered[0], cards_ordered[11]) {
+        let (first_largest, second_largest) = match task {
+            Task::First => find_two_largest_numbers(cards),
+            Task::Second => find_two_largest_numbers(&cards[1..]),
+        };
+        match match task {
+            Task::First => (first_largest, second_largest),
+            Task::Second => (first_largest + cards[0], second_largest),
+        } {
             (5, 0) => HandType::FiveOfAKind,
             (4, 1) => HandType::FourOfAKind,
             (3, 2) => HandType::FullHouse,
@@ -102,8 +113,6 @@ impl Hand {
 impl PartialOrd for Hand {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self.hand_type == other.hand_type {
-            // Special case.
-            // Both have the same hand type. We now need to check the first cards.
             for (c1, c2) in self.hand.bytes().zip(other.hand.bytes()) {
                 if c1 == c2 {
                     continue;
