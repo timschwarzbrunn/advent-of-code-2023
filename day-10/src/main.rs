@@ -192,30 +192,38 @@ fn solve_second_task<B: BufRead>(reader: B) -> usize {
     let mut result = 0;
     // Ray casting algorithm.
     for (row, line) in lines.iter().enumerate() {
-        // Replace the horizontal lines but keep their length.
+        // Replace the horizontal lines with corners but keep their length.
         let pattern_l7 = Regex::new(r"L-*7").unwrap();
         let pattern_lj = Regex::new(r"L-*J").unwrap();
         let pattern_f7 = Regex::new(r"F-*7").unwrap();
         let pattern_fj = Regex::new(r"F-*J").unwrap();
+        // L---7 becomes |....
         let line = pattern_l7.replace_all(&line, |caps: &regex::Captures| {
             let matched_length = caps[0].len();
             "|".to_string() + &".".repeat(matched_length - 1)
         });
+        // L---J becomes ||...
         let line = pattern_lj.replace_all(&line, |caps: &regex::Captures| {
             let matched_length = caps[0].len();
             "||".to_string() + &".".repeat(matched_length - 2)
         });
+        // F---7 becomes ||...
         let line = pattern_f7.replace_all(&line, |caps: &regex::Captures| {
             let matched_length = caps[0].len();
             "||".to_string() + &".".repeat(matched_length - 2)
         });
+        // F---J becomes |....
         let line = pattern_fj.replace_all(&line, |caps: &regex::Captures| {
             let matched_length = caps[0].len();
             "|".to_string() + &".".repeat(matched_length - 1)
         });
+        // Count the intersections with the polygon and if a tile that is not on the path
+        // occurs after an odd number of intersections, then its inside the polygon.
         let mut number_of_intersections = 0;
         for (col, c) in line.chars().enumerate() {
             if path.contains(&(col, row)) {
+                // Only the '|' counts as a wall, since we already replaced the other
+                // characters by a '|'.
                 if c == '|' {
                     number_of_intersections += 1;
                 }
