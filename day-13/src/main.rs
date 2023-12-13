@@ -74,11 +74,11 @@ fn solve_task<B: BufRead>(reader: B, number_of_allowed_smudges: usize) -> usize 
     let mut pattern: Vec<String> = Vec::new();
     let mut result = 0;
     for line in reader.lines().map(Result::unwrap) {
-        if line.trim().is_empty() {
+        if line.is_empty() {
             result += get_reflection_score(&pattern, number_of_allowed_smudges);
             pattern.clear();
         } else {
-            pattern.push(line.clone());
+            pattern.push(line);
         }
     }
     // Catch the last one.
