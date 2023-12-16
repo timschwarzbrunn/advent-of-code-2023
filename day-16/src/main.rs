@@ -1,6 +1,8 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader},
+    sync::{Arc, Mutex},
+    thread,
 };
 
 #[derive(Debug, Default)]
@@ -131,62 +133,118 @@ fn solve_second_task<B: BufRead>(reader: B) -> usize {
         .map(Result::unwrap)
         .map(|line| line.chars().collect())
         .collect();
-    let mut result = 0;
-    for y in 0..map.len() {
-        // Left.
-        let mut visit_status: Vec<Vec<CellVisitStatus>> =
-            vec![vec![CellVisitStatus::new(); map[0].len()]; map.len()];
-        track_beam(&map, &mut visit_status, (-1, y as isize), Direction::Right);
-        result = result.max(
-            visit_status
-                .iter()
-                .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
-                .sum(),
-        );
-        // Right.
-        let mut visit_status: Vec<Vec<CellVisitStatus>> =
-            vec![vec![CellVisitStatus::new(); map[0].len()]; map.len()];
-        track_beam(
-            &map,
-            &mut visit_status,
-            (map[0].len() as isize, y as isize),
-            Direction::Left,
-        );
-        result = result.max(
-            visit_status
-                .iter()
-                .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
-                .sum(),
-        );
-    }
-    for x in 0..map[0].len() {
-        // Top.
-        let mut visit_status: Vec<Vec<CellVisitStatus>> =
-            vec![vec![CellVisitStatus::new(); map[0].len()]; map.len()];
-        track_beam(&map, &mut visit_status, (x as isize, -1), Direction::Down);
-        result = result.max(
-            visit_status
-                .iter()
-                .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
-                .sum(),
-        );
-        // Bottom.
-        let mut visit_status: Vec<Vec<CellVisitStatus>> =
-            vec![vec![CellVisitStatus::new(); map[0].len()]; map.len()];
-        track_beam(
-            &map,
-            &mut visit_status,
-            (x as isize, map.len() as isize),
-            Direction::Up,
-        );
-        result = result.max(
-            visit_status
-                .iter()
-                .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
-                .sum(),
-        );
-    }
-    result
+    // Left.
+    let result_left = Arc::new(Mutex::new(0));
+    let map_left = map.clone();
+    let thread_left = thread::spawn({
+        let result_left = Arc::clone(&result_left);
+        move || {
+            for y in 0..map_left.len() {
+                let mut visit_status: Vec<Vec<CellVisitStatus>> =
+                    vec![vec![CellVisitStatus::new(); map_left[0].len()]; map_left.len()];
+                track_beam(
+                    &map_left,
+                    &mut visit_status,
+                    (-1, y as isize),
+                    Direction::Right,
+                );
+                let mut result_left = result_left.lock().unwrap();
+                *result_left = (*result_left).max(
+                    visit_status
+                        .iter()
+                        .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
+                        .sum(),
+                );
+            }
+        }
+    });
+    // Right.
+    let result_right = Arc::new(Mutex::new(0));
+    let map_right = map.clone();
+    let thread_right = thread::spawn({
+        let result_right = Arc::clone(&result_right);
+        move || {
+            for y in 0..map_right.len() {
+                let mut visit_status: Vec<Vec<CellVisitStatus>> =
+                    vec![vec![CellVisitStatus::new(); map_right[0].len()]; map_right.len()];
+                track_beam(
+                    &map_right,
+                    &mut visit_status,
+                    (map_right[0].len() as isize, y as isize),
+                    Direction::Left,
+                );
+                let mut result_right = result_right.lock().unwrap();
+                *result_right = (*result_right).max(
+                    visit_status
+                        .iter()
+                        .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
+                        .sum(),
+                );
+            }
+        }
+    });
+    // Top.
+    let result_top = Arc::new(Mutex::new(0));
+    let map_top = map.clone();
+    let thread_top = thread::spawn({
+        let result_top = Arc::clone(&result_top);
+        move || {
+            for x in 0..map_top[0].len() {
+                let mut visit_status: Vec<Vec<CellVisitStatus>> =
+                    vec![vec![CellVisitStatus::new(); map_top[0].len()]; map_top.len()];
+                track_beam(
+                    &map_top,
+                    &mut visit_status,
+                    (x as isize, -1),
+                    Direction::Down,
+                );
+                let mut result_top = result_top.lock().unwrap();
+                *result_top = (*result_top).max(
+                    visit_status
+                        .iter()
+                        .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
+                        .sum(),
+                );
+            }
+        }
+    });
+    // Bottom.
+    let result_bottom = Arc::new(Mutex::new(0));
+    let map_bottom = map.clone();
+    let thread_bottom = thread::spawn({
+        let result_bottom = Arc::clone(&result_bottom);
+        move || {
+            for x in 0..map_bottom[0].len() {
+                let mut visit_status: Vec<Vec<CellVisitStatus>> =
+                    vec![vec![CellVisitStatus::new(); map_bottom[0].len()]; map_bottom.len()];
+                track_beam(
+                    &map_bottom,
+                    &mut visit_status,
+                    (x as isize, map_bottom.len() as isize),
+                    Direction::Up,
+                );
+                let mut result_bottom = result_bottom.lock().unwrap();
+                *result_bottom = (*result_bottom).max(
+                    visit_status
+                        .iter()
+                        .map(|line| line.iter().filter(|cell| cell.was_visited()).count())
+                        .sum(),
+                );
+            }
+        }
+    });
+
+    thread_left.join().unwrap();
+    thread_right.join().unwrap();
+    thread_top.join().unwrap();
+    thread_bottom.join().unwrap();
+
+    let result_left = *result_left.lock().unwrap();
+    let result_right = *result_right.lock().unwrap();
+    let result_top = *result_top.lock().unwrap();
+    let result_bottom = *result_bottom.lock().unwrap();
+
+    result_left.max(result_right.max(result_top.max(result_bottom)))
 }
 
 fn main() {
