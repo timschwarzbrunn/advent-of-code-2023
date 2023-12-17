@@ -19,3 +19,4 @@ cp template/src/main.rs $project_name/src/main.rs
 cd $project_name
 touch input
 touch input.test
+echo "\n[profile.release]\ndebug=true" >> Cargo.toml
