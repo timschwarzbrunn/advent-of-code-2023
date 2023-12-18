@@ -16,4 +16,4 @@ cargo build --release
 hyperfine \
 "./target/release/$project_name ./input first" \
 "./target/release/$project_name ./input second" \
---warmup 200 -N
+--warmup 20 -N
